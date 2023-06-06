@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
 	sound_parameters sp;
 
-	sound *sine = new sound(sample_rate, 440.);
+	sound *sine = new sound_sine(sample_rate, 440.);
 	sine->add_mapping(0, 0, 1.0);  // mono -> left
 	sine->add_mapping(0, 1, 1.0);  // mono -> right
 

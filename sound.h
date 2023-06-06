@@ -30,9 +30,6 @@ protected:
 public:
 	sound(const int sample_rate, const double frequency) : frequency(frequency)
 	{
-		delta_t = f_to_delta_t(frequency, sample_rate);
-
-		input_output_matrix.resize(1);
 	}
 
 	void add_mapping(const int from, const int to, const double volume)
@@ -61,20 +58,36 @@ public:
 		return input_output_matrix[from][to];
 	}
 
-	virtual size_t get_n_channels()
+	virtual size_t get_n_channels() = 0;
+
+	// sample, output-channels
+	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) = 0;
+
+	void tick()
+	{
+		t += delta_t * pitchbend;
+	}
+};
+
+class sound_sine : public sound
+{
+public:
+	sound_sine(const int sample_rate, const double frequency) : sound(sample_rate, frequency)
+	{
+		delta_t = f_to_delta_t(frequency, sample_rate);
+
+		input_output_matrix.resize(1);
+	}
+
+	virtual size_t get_n_channels() override
 	{
 		return 1;
 	}
 
 	// sample, output-channels
-	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr)
+	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
 	{
 		return { sin(t), input_output_matrix[channel_nr] };
-	}
-
-	void tick()
-	{
-		t += delta_t * pitchbend;
 	}
 };
 
