@@ -85,6 +85,8 @@ sound_sample::sound_sample(const int sample_rate, const double frequency, const 
 	load_sample(filename, &samples, &sample_sample_rate);
 
 	delta_t = sample_sample_rate / double(sample_rate);
+
+	input_output_matrix.resize(samples.at(0).size());
 }
 
 std::pair<double, std::map<int, double> > sound_sample::get_sample(const size_t channel_nr)
