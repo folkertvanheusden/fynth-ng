@@ -37,6 +37,8 @@ int main(int argc, char *argv[])
 			sine->channels[0].second = vl;
 			sine->channels[1].second = vr;
 
+			sine->set_pitch_bend(y - x);
+
 			lck.unlock();
 
 			usleep(10000);

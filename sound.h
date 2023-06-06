@@ -17,6 +17,8 @@ private:
 	double frequency { 100. };
 	double amplitude { 0.   };
 
+	double pitchbend { 1.   };
+
 	double t         { 0.   };
 	double delta_t   { 0.   };
 
@@ -28,7 +30,12 @@ public:
 		delta_t = f_to_delta_t(frequency, sample_rate);
 	}
 
-	double tick(double pitchbend = 1.0) {
+	void set_pitch_bend(const double pb)
+	{
+		pitchbend = pb;
+	}
+
+	double tick() {
 		double v = sin(t) * amplitude;
 
 		t += delta_t * pitchbend;
