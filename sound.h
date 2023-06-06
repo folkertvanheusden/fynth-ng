@@ -67,6 +67,8 @@ public:
 	{
 		t += delta_t * pitchbend;
 	}
+
+	virtual std::string get_name() const = 0;
 };
 
 class sound_sine : public sound
@@ -89,6 +91,42 @@ public:
 	{
 		return { sin(t), input_output_matrix[channel_nr] };
 	}
+
+	std::string get_name() const override
+	{
+		return "sine";
+	}
+};
+
+class sound_square_wave : public sound
+{
+public:
+	sound_square_wave(const int sample_rate, const double frequency) : sound(sample_rate, frequency)
+	{
+		delta_t = f_to_delta_t(frequency, sample_rate);
+
+		input_output_matrix.resize(1);
+	}
+
+	virtual size_t get_n_channels() override
+	{
+		return 1;
+	}
+
+	// sample, output-channels
+	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
+	{
+		double v = sin(t);
+
+		double v_out = v > 0 ? 1 : (v < 0 ? -1 : 0);
+
+		return { v_out, input_output_matrix[channel_nr] };
+	}
+
+	std::string get_name() const override
+	{
+		return "square_wave";
+	}
 };
 
 class sound_sample : public sound
@@ -105,6 +143,11 @@ public:
 	}
 
 	std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override;
+
+	std::string get_name() const override
+	{
+		return "sample";
+	}
 };
 
 class sound_parameters

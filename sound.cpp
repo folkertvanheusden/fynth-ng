@@ -37,8 +37,7 @@ void on_process(void *userdata)
 		for(int t=0; t<period_size; t++) {
 			double *current_sample_base = &temp_buffer[t * sp->n_channels];
 
-			for(auto & sound : sp->sounds)
-			{
+			for(auto & sound : sp->sounds) {
 				size_t n_source_channels = sound.second->get_n_channels();
 
 				for(size_t ch=0; ch<n_source_channels; ch++) {
