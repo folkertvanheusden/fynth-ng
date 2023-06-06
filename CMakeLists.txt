@@ -1,0 +1,34 @@
+project(fynth-ng)
+cmake_minimum_required(VERSION 3.2)
+add_definitions("-std=gnu++17 -ggdb3")
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fstack-protector-strong -fno-inline")
+set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer-fno-inline")
+
+add_executable(
+  fynth-ng
+  main.cpp
+  pipewire.cpp
+  sound.cpp
+)
+
+set(CMAKE_BUILD_TYPE Debug)
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads)
+target_link_libraries(fynth-ng Threads::Threads)
+
+include(FindPkgConfig)
+
+pkg_check_modules(SNDFILE REQUIRED sndfile)
+target_link_libraries(fynth-ng ${SNDFILE_LIBRARIES})
+target_include_directories(fynth-ng PUBLIC ${SNDFILE_INCLUDE_DIRS})
+target_compile_options(fynth-ng PUBLIC ${SNDFILE_CFLAGS_OTHER})
+
+# pipewire
+find_package(PipeWire)
+pkg_check_modules(PIPEWIRE libpipewire-0.3)
+target_link_libraries(fynth-ng ${PIPEWIRE_LIBRARIES})
+target_include_directories(fynth-ng PUBLIC ${PIPEWIRE_INCLUDE_DIRS})
+target_compile_options(fynth-ng PUBLIC ${PIPEWIRE_CFLAGS_OTHER})
