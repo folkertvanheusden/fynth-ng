@@ -10,11 +10,13 @@ static void on_state_changed(void *data, enum pw_stream_state old, enum pw_strea
 
 void configure_pipewire(const int sample_rate, const int bits_per_sample, const int n_channels, sound_parameters *const target)
 {
+	const char prog_name[] = "fynth-ng";
+
 	target->n_channels      = n_channels;
 	target->sample_rate     = sample_rate;
 	target->bits_per_sample = bits_per_sample;  // TODO
 
-	target->pw.th = new std::thread([target]() {
+	target->pw.th = new std::thread([prog_name, target]() {
 			target->pw.b    = SPA_POD_BUILDER_INIT(target->pw.buffer, sizeof(target->pw.buffer));
 
 			target->pw.loop = pw_main_loop_new(nullptr);
@@ -28,8 +30,10 @@ void configure_pipewire(const int sample_rate, const int bits_per_sample, const 
 
 			target->pw.stream = pw_stream_new_simple(
 					pw_main_loop_get_loop(target->pw.loop),
-					"fynth-ng",
+					prog_name,
 					pw_properties_new(
+						PW_KEY_APP_NAME, prog_name,
+						PW_KEY_NODE_NAME, prog_name,
 						PW_KEY_MEDIA_TYPE, "Audio",
 						PW_KEY_MEDIA_CATEGORY, "Playback",
 						PW_KEY_MEDIA_ROLE, "Music",
