@@ -25,40 +25,25 @@ protected:
 	double delta_t   { 0.   };
 
 	// input channel, { output channel, volume }
-	std::map<int, std::map<int, double> > input_output_matrix;
+	std::vector<std::map<int, double> > input_output_matrix;
 
 public:
 	sound(const int sample_rate, const double frequency) : frequency(frequency)
 	{
 		delta_t = f_to_delta_t(frequency, sample_rate);
+
+		input_output_matrix.resize(1);
 	}
 
 	void add_mapping(const int from, const int to, const double volume)
 	{
 		// note that 'from' is ignored here as this object has only 1 generator
-		auto it = input_output_matrix.find(from);
-
-		if (it == input_output_matrix.end())
-		{
-			std::map<int, double> entry;
-			entry.insert({ to, volume });
-
-			input_output_matrix.insert({ from, entry });
-		}
-		else
-		{
-			it->second.insert({ to, volume });
-		}
+		input_output_matrix[from].insert({ to, volume });
 	}
 
 	void remove_mapping(const int from, const int to)
 	{
-		auto it = input_output_matrix.find(from);
-
-		if (it == input_output_matrix.end())
-			return;
-
-		it->second.erase(to);
+		input_output_matrix[from].erase(to);
 	}
 
 	void set_pitch_bend(const double pb)
@@ -68,16 +53,12 @@ public:
 
 	void set_volume(const int from, const int to, const double v)
 	{
-		auto it = input_output_matrix.find(from);
-
-		it->second[to] = v;
+		input_output_matrix[from][to] = v;
 	}
 
 	double get_volume(const int from, const int to)
 	{
-		auto it = input_output_matrix.find(from);
-
-		return it->second[to];
+		return input_output_matrix[from][to];
 	}
 
 	virtual size_t get_n_channels()
@@ -88,7 +69,7 @@ public:
 	// sample, output-channels
 	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr)
 	{
-		return { sin(t), input_output_matrix.find(int(channel_nr))->second };
+		return { sin(t), input_output_matrix[channel_nr] };
 	}
 
 	void tick()

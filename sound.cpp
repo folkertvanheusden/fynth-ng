@@ -91,5 +91,5 @@ std::pair<double, std::map<int, double> > sound_sample::get_sample(const size_t 
 {
 	size_t offset = fmod(t, samples.size());
 
-	return { samples.at(offset).at(channel_nr), input_output_matrix.find(int(channel_nr))->second };
+	return { samples.at(offset).at(channel_nr), input_output_matrix[channel_nr] };
 }
