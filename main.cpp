@@ -13,17 +13,11 @@ int main(int argc, char *argv[])
 
 	sound_parameters sp;
 
-	sound *triangle = new sound_triangle(sample_rate, 440.);
-	triangle->add_mapping(0, 0, 1.0);  // mono -> left
-	triangle->add_mapping(0, 1, 1.0);  // mono -> right
+	sound *concave_triangle = new sound_concave_triangle(sample_rate, 440.);
+	concave_triangle->add_mapping(0, 0, 1.0);  // mono -> left
+	concave_triangle->add_mapping(0, 1, 1.0);  // mono -> right
 
-	sp.sounds.insert({ { 0, 0 }, triangle });
-
-//	sound *square_wave = new sound_square_wave(sample_rate, 440.);
-//	square_wave->add_mapping(0, 0, 0.5);  // mono -> left
-//	square_wave->add_mapping(0, 1, 0.5);  // mono -> right
-
-//	sp.sounds.insert({ { 1, 0 }, square_wave });
+	sp.sounds.insert({ { 0, 0 }, concave_triangle });
 
 	sound *sample = new sound_sample(sample_rate, "the_niz.wav");
 	sample->add_mapping(0, 0, 1.0);  // mono -> left
@@ -50,10 +44,10 @@ int main(int argc, char *argv[])
 
 				std::unique_lock lck(sp.sounds_lock);
 
-				triangle->set_volume(0, 0, vl);
-				triangle->set_volume(0, 1, vr);
+				concave_triangle->set_volume(0, 0, vl);
+				concave_triangle->set_volume(0, 1, vr);
 
-				triangle->set_pitch_bend(y - x);
+				concave_triangle->set_pitch_bend(y - x);
 
 				lck.unlock();
 			}

@@ -158,6 +158,26 @@ public:
 	}
 };
 
+class sound_concave_triangle : public sound_triangle
+{
+public:
+	sound_concave_triangle(const int sample_rate, const double frequency) : sound_triangle(sample_rate, frequency)
+	{
+	}
+
+	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
+	{
+		double v_out = pow((2 / M_PI) * asin(sin(t)), 2.0);
+
+		return { v_out, input_output_matrix[channel_nr] };
+	}
+
+	std::string get_name() const override
+	{
+		return "concave_triangle";
+	}
+};
+
 class sound_sample : public sound
 {
 private:
