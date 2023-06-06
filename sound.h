@@ -129,6 +129,35 @@ public:
 	}
 };
 
+class sound_triangle : public sound
+{
+public:
+	sound_triangle(const int sample_rate, const double frequency) : sound(sample_rate, frequency)
+	{
+		delta_t = f_to_delta_t(frequency, sample_rate);
+
+		input_output_matrix.resize(1);
+	}
+
+	virtual size_t get_n_channels() override
+	{
+		return 1;
+	}
+
+	// sample, output-channels
+	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
+	{
+		double v_out = (2 / M_PI) * asin(sin(t));
+
+		return { v_out, input_output_matrix[channel_nr] };
+	}
+
+	std::string get_name() const override
+	{
+		return "triangle";
+	}
+};
+
 class sound_sample : public sound
 {
 private:
