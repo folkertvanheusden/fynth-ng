@@ -3,6 +3,11 @@
 #include "sound.h"
 
 
+double f_to_delta_t(const double frequency, const int sample_rate)
+{
+	return 2 * M_PI * frequency / sample_rate;
+}
+
 void on_process(void *userdata)
 {
 	sound_parameters *sp = reinterpret_cast<sound_parameters *>(userdata);
@@ -33,13 +38,7 @@ void on_process(void *userdata)
 
 			for(auto & sound : sp->sounds)
 			{
-				double v = 0.;
-
-				switch(sound.type) {
-					case sound::ST_SIN:
-						v = sin(sound.t) * sound.amplitude;
-						sound.t += sound.delta_t;
-				}
+				double v = sound.tick();
 
 				for(int channel : sound.channels) {
 					if (channel < sp->n_channels)

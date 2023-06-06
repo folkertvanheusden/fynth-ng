@@ -1,5 +1,6 @@
 #pragma once
 
+#include <math.h>
 #include <mutex>
 #include <shared_mutex>
 #include <thread>
@@ -7,6 +8,8 @@
 
 #include <pipewire/pipewire.h>
 #include <spa/param/audio/format-utils.h>
+
+double f_to_delta_t(const double frequency, const int sample_rate);
 
 class pipewire_data
 {
@@ -24,14 +27,28 @@ public:
 
 class sound
 {
-public:
+private:
 	double frequency { 100. };
 	double amplitude { 0.   };
 
 	double t         { 0.   };
 	double delta_t   { 0.   };
 
-	enum { ST_SIN } type;
+public:
+	sound(const int sample_rate, const double frequency, const double amplitude, const std::vector<int> channels) :
+		frequency(frequency),
+		amplitude(amplitude),
+       		channels(channels) {
+		delta_t = f_to_delta_t(frequency, sample_rate);
+	}
+
+	double tick() {
+		double v = sin(t) * amplitude;
+
+		t += delta_t;
+
+		return v;
+	}
 
 	std::vector<int> channels;
 };
