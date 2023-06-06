@@ -1,5 +1,6 @@
 #include <math.h>
 
+#include "sample.h"
 #include "sound.h"
 
 
@@ -38,12 +39,18 @@ void on_process(void *userdata)
 
 			for(auto & sound : sp->sounds)
 			{
-				double v = sound.second->tick();
+				size_t n_source_channels = sound.second->get_n_channels();
 
-				for(auto & channel : sound.second->channels) {
-					if (channel.first < sp->n_channels)
-						current_sample_base[channel.first] += v * channel.second;
+				for(size_t i=0; i<n_source_channels; i++) {
+					auto rc = sound.second->get_sample(i);
+
+					double value = rc.first;
+
+					for(auto mapping : rc.second)
+						current_sample_base[mapping.first] += value * mapping.second;
 				}
+
+				sound.second->tick();
 			}
 		}
 	}
@@ -68,4 +75,21 @@ again:
 		printf("no buffer\n");
 
 	delete [] temp_buffer;
+}
+
+sound_sample::sound_sample(const int sample_rate, const double frequency, const std::string & filename) :
+	sound(sample_rate, frequency)
+{
+	unsigned sample_sample_rate = 0;
+
+	load_sample(filename, &samples, &sample_sample_rate);
+
+	delta_t = sample_sample_rate / double(sample_rate);
+}
+
+std::pair<double, std::map<int, double> > sound_sample::get_sample(const size_t channel_nr)
+{
+	size_t offset = fmod(t, samples.size());
+
+	return { samples.at(offset).at(channel_nr), input_output_matrix.find(int(channel_nr))->second };
 }

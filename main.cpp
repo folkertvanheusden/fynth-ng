@@ -13,7 +13,9 @@ int main(int argc, char *argv[])
 
 	sound_parameters sp;
 
-	sound *sine = new sound(sample_rate, 440., 1., { { 0, 1. }, { 1, -1. } });
+	sound *sine = new sound(sample_rate, 440.);
+	sine->add_mapping(0, 0, 1.0);  // mono -> left
+	sine->add_mapping(0, 1, 1.0);  // mono -> right
 
 	sp.sounds.insert({ { 0, 0 }, sine });
 
@@ -31,11 +33,12 @@ int main(int argc, char *argv[])
 			encode_surround(1.0, x, y, &left, &right, &back);
 
 			double vl = left - back;
-                        double vr = right + back;
+			double vr = right + back;
 
 			std::unique_lock lck(sp.sounds_lock);
-			sine->channels[0].second = vl;
-			sine->channels[1].second = vr;
+
+			sine->set_volume(0, 0, vl);
+			sine->set_volume(0, 1, vr);
 
 			sine->set_pitch_bend(y - x);
 
