@@ -31,11 +31,13 @@ void load_sample(const std::string & filename, std::vector<std::vector<double> >
 			std::vector<double> row;
 
 			for(int j=offset; j<offset + si.channels; j++)
-				row.push_back(buffer[offset]);
+				row.push_back(buffer[j]);
 
 			samples->push_back(row);
 		}
 	}
 
 	sf_close(sh);
+
+	delete [] buffer;
 }

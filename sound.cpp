@@ -29,20 +29,20 @@ void on_process(void *userdata)
 
 	double *temp_buffer = new double[sp->n_channels * period_size]();
 
-	// printf("latency: %.2fms\n", period_size * 1000.0 / sp->sample_rate);
+	// printf("latency: %.2fms, channel count: %d\n", period_size * 1000.0 / sp->sample_rate, sp->n_channels);
 
-	try {
+//	try {
 		std::shared_lock lck(sp->sounds_lock);
 
-		for(int i=0; i<period_size; i++) {
-			double *current_sample_base = &temp_buffer[i * sp->n_channels];
+		for(int t=0; t<period_size; t++) {
+			double *current_sample_base = &temp_buffer[t * sp->n_channels];
 
 			for(auto & sound : sp->sounds)
 			{
 				size_t n_source_channels = sound.second->get_n_channels();
 
-				for(size_t i=0; i<n_source_channels; i++) {
-					auto rc = sound.second->get_sample(i);
+				for(size_t ch=0; ch<n_source_channels; ch++) {
+					auto rc = sound.second->get_sample(ch);
 
 					double value = rc.first;
 
@@ -53,10 +53,10 @@ void on_process(void *userdata)
 				sound.second->tick();
 			}
 		}
-	}
-	catch(...) {
-		printf("Exception\n");
-	}
+//	}
+//	catch(...) {
+//		printf("Exception\n");
+//	}
 
 again:
 	double *dest = reinterpret_cast<double *>(buf->datas[0].data);
@@ -77,8 +77,8 @@ again:
 	delete [] temp_buffer;
 }
 
-sound_sample::sound_sample(const int sample_rate, const double frequency, const std::string & filename) :
-	sound(sample_rate, frequency)
+sound_sample::sound_sample(const int sample_rate, const std::string & filename) :
+	sound(sample_rate, sample_rate / 2)
 {
 	unsigned sample_sample_rate = 0;
 
@@ -87,11 +87,18 @@ sound_sample::sound_sample(const int sample_rate, const double frequency, const 
 	delta_t = sample_sample_rate / double(sample_rate);
 
 	input_output_matrix.resize(samples.at(0).size());
+
+	printf("Sample %s has %zu channel(s) and is sampled at %uHz\n", filename.c_str(), input_output_matrix.size(), sample_sample_rate);
 }
 
 std::pair<double, std::map<int, double> > sound_sample::get_sample(const size_t channel_nr)
 {
-	size_t offset = fmod(t, samples.size());
+	double use_t = t;
+
+	if (use_t < 0)
+		use_t += ceil(fabs(use_t) / samples.size()) * samples.size();
+
+	size_t offset = fmod(use_t, samples.size());
 
 	return { samples.at(offset).at(channel_nr), input_output_matrix[channel_nr] };
 }

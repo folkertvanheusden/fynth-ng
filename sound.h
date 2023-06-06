@@ -84,7 +84,7 @@ private:
 	std::vector<std::vector<double> > samples;
 
 public:
-	sound_sample(const int sample_rate, const double frequency, const std::string & file_name);
+	sound_sample(const int sample_rate, const std::string & file_name);
 
 	size_t get_n_channels() override
 	{
