@@ -7,6 +7,7 @@ set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointe
 
 add_executable(
   fynth-ng
+  effects.cpp
   main.cpp
   pipewire.cpp
   sound.cpp

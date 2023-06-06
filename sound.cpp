@@ -12,8 +12,6 @@ void on_process(void *userdata)
 {
 	sound_parameters *sp = reinterpret_cast<sound_parameters *>(userdata);
 
-	// TODO lock sp
-
 	pw_buffer *b = pw_stream_dequeue_buffer(sp->pw.stream);
 
 	if (b == nullptr) {
@@ -33,16 +31,18 @@ void on_process(void *userdata)
 	// printf("latency: %.2fms\n", period_size * 1000.0 / sp->sample_rate);
 
 	try {
+		std::shared_lock lck(sp->sounds_lock);
+
 		for(int i=0; i<period_size; i++) {
 			double *current_sample_base = &temp_buffer[i * sp->n_channels];
 
 			for(auto & sound : sp->sounds)
 			{
-				double v = sound.tick();
+				double v = sound.second->tick();
 
-				for(int channel : sound.channels) {
-					if (channel < sp->n_channels)
-						current_sample_base[channel] += v;
+				for(auto & channel : sound.second->channels) {
+					if (channel.first < sp->n_channels)
+						current_sample_base[channel.first] += v * channel.second;
 				}
 			}
 		}
@@ -50,8 +50,6 @@ void on_process(void *userdata)
 	catch(...) {
 		printf("Exception\n");
 	}
-
-	// TODO unlock sp
 
 again:
 	double *dest = reinterpret_cast<double *>(buf->datas[0].data);

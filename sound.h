@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <math.h>
 #include <mutex>
 #include <shared_mutex>
@@ -20,7 +21,7 @@ private:
 	double delta_t   { 0.   };
 
 public:
-	sound(const int sample_rate, const double frequency, const double amplitude, const std::vector<int> & channels) :
+	sound(const int sample_rate, const double frequency, const double amplitude, const std::vector<std::pair<int, double> > & channels) :
 		frequency(frequency),
 		amplitude(amplitude),
        		channels(channels) {
@@ -35,7 +36,8 @@ public:
 		return v;
 	}
 
-	std::vector<int> channels;
+	// channel, volume in that channel
+	std::vector<std::pair<int, double> > channels;
 };
 
 class sound_parameters
@@ -47,8 +49,9 @@ public:
 
 	pipewire_data pw;
 
-	std::unique_lock<std::shared_mutex> sounds_lock;
-	std::vector<sound> sounds;
+	std::shared_mutex sounds_lock;
+	// channel, note
+	std::map<std::pair<int, int>, sound *> sounds;
 };
 
 void on_process(void *userdata);
