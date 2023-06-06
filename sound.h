@@ -28,10 +28,10 @@ public:
 		delta_t = f_to_delta_t(frequency, sample_rate);
 	}
 
-	double tick() {
+	double tick(double pitchbend = 1.0) {
 		double v = sin(t) * amplitude;
 
-		t += delta_t;
+		t += delta_t * pitchbend;
 
 		return v;
 	}
