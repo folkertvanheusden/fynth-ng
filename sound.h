@@ -213,4 +213,4 @@ public:
 	std::map<std::pair<int, int>, sound *> sounds;
 };
 
-void on_process(void *userdata);
+void on_process_audio(void *userdata);

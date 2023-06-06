@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
 	sp.sounds.insert({ { 2, 0 }, sample });
 
-	configure_pipewire(sample_rate, 16, 2, &sp);
+	configure_pipewire(sample_rate, 24, 2, &sp);
 
 	for(;;) {
 		for(int i=0; i<360; i++) {

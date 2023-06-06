@@ -9,7 +9,7 @@ double f_to_delta_t(const double frequency, const int sample_rate)
 	return 2 * M_PI * frequency / sample_rate;
 }
 
-void on_process(void *userdata)
+void on_process_audio(void *userdata)
 {
 	sound_parameters *sp = reinterpret_cast<sound_parameters *>(userdata);
 

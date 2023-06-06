@@ -23,7 +23,7 @@ void configure_pipewire(const int sample_rate, const int bits_per_sample, const 
 				fprintf(stderr, "pw_main_loop_new failed\n");
 
 			target->pw.stream_events.version = PW_VERSION_STREAM_EVENTS;
-			target->pw.stream_events.process = on_process;
+			target->pw.stream_events.process = on_process_audio;
 			target->pw.stream_events.state_changed = on_state_changed;
 
 			target->pw.stream = pw_stream_new_simple(
