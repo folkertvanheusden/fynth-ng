@@ -63,9 +63,9 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 
 			if (velocity == 0) {
 				if (it != pw_data->sp->sounds.end()) {
-					delete it->second;
+					it->second->set_has_ended();
 
-					pw_data->sp->sounds.erase(it);
+					pw_data->sp->note_end_cv.notify_all();
 				}
 			}
 			else {
@@ -80,6 +80,8 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 				}
 				else {
 					it->second->set_volume(velocity_float);
+
+					it->second->unset_has_ended();
 				}
 			}
 		}

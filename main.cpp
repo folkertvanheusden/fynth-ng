@@ -22,6 +22,8 @@ int main(int argc, char *argv[])
 
 	sp_midi.sp = &sp_audio;
 
+	std::thread th([&sp_audio] { end_notes(&sp_audio); });
+
 	for(;;)
 		usleep(10000);
 

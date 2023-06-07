@@ -111,3 +111,55 @@ std::pair<double, std::map<int, double> > sound_sample::get_sample(const size_t 
 
 	return { samples.at(offset).at(channel_nr), input_output_matrix[channel_nr] };
 }
+
+void end_notes(sound_parameters *const sp)
+{
+	bool have_any = false;
+
+	for(;;) {
+		std::unique_lock lck(sp->sounds_lock);
+
+		if (have_any) {
+			have_any = false;
+		}
+		else {
+			sp->note_end_cv.wait(lck);
+		}
+
+		std::vector<std::pair<int, int> > to_erase;
+
+		uint64_t ts_now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+		for(auto & sound : sp->sounds) {
+			if (sound.second->get_has_ended_ts().has_value() == false)
+				continue;
+
+			uint64_t ts_end_start = sound.second->get_has_ended_ts().value();
+
+			double volume_at_end_start = sound.second->get_volume_at_end_start();
+
+			uint64_t ts_diff = ts_now - ts_end_start;
+
+			double volume_steps = volume_at_end_start / 50;  // 50ms
+
+			double new_volume = volume_at_end_start - ts_diff * volume_steps;
+
+			if (new_volume <= 0.)
+				to_erase.push_back(sound.first);
+			else
+				sound.second->set_volume(new_volume);
+
+			have_any = true;
+		}
+
+		for(auto & item : to_erase) {
+			auto it = sp->sounds.find(item);
+
+			if (it != sp->sounds.end()) {
+				delete it->second;
+
+				sp->sounds.erase(it);
+			}
+		}
+	}
+}

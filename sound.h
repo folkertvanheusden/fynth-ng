@@ -1,9 +1,12 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
+#include <condition_variable>
 #include <map>
 #include <math.h>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <shared_mutex>
 #include <vector>
@@ -25,12 +28,37 @@ protected:
 	double t         { 0.   };
 	double delta_t   { 0.   };
 
+	std::optional<uint64_t> has_ended_ts;
+	double volume_at_end_start { 0. };
+
 	// input channel, { output channel, volume }
 	std::vector<std::map<int, double> > input_output_matrix;
 
 public:
 	sound(const int sample_rate, const double frequency) : frequency(frequency)
 	{
+	}
+
+	std::optional<uint64_t> get_has_ended_ts()
+	{
+		return has_ended_ts;
+	}	
+
+	double get_volume_at_end_start()
+	{
+		return volume_at_end_start;
+	}
+
+	void set_has_ended()
+	{
+		has_ended_ts = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+		volume_at_end_start = get_avg_volume();
+	}
+
+	void unset_has_ended()
+	{
+		has_ended_ts.reset();
 	}
 
 	void add_mapping(const int from, const int to, const double volume)
@@ -60,6 +88,21 @@ public:
 			for(auto & to: input_output_matrix.at(from))
 				to.second = v;
 		}
+	}
+
+	double get_avg_volume()
+	{
+		double v = 0;
+		int n = 0;
+
+		for(size_t from=0; from<input_output_matrix.size(); from++) {
+			for(auto & to: input_output_matrix.at(from)) {
+				v += to.second;
+				n++;
+			}
+		}
+
+		return v / n;
 	}
 
 	double get_volume(const int from, const int to)
@@ -234,6 +277,10 @@ public:
 
 	std::mutex filters_lock;
 	std::vector<FilterButterworth *> lp_filters;
+
+	std::condition_variable_any note_end_cv;
 };
 
 void on_process_audio(void *userdata);
+
+void end_notes(sound_parameters *const sp);
