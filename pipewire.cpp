@@ -8,13 +8,9 @@ static void on_state_changed(void *data, enum pw_stream_state old, enum pw_strea
 //	printf("%d --> %d | %s\n", old, state, error);
 }
 
-void configure_pipewire(const int sample_rate, const int bits_per_sample, const int n_channels, sound_parameters *const target)
+void configure_pipewire(sound_parameters *const target)
 {
 	const char prog_name[] = "fynth-ng";
-
-	target->n_channels      = n_channels;
-	target->sample_rate     = sample_rate;
-	target->bits_per_sample = bits_per_sample;  // TODO
 
 	target->pw.th = new std::thread([prog_name, target]() {
 			target->pw.b    = SPA_POD_BUILDER_INIT(target->pw.buffer, sizeof(target->pw.buffer));

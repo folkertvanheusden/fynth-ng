@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 
 	init_pipewire(&argc, &argv);
 
-	sound_parameters sp;
+	sound_parameters sp(sample_rate, 2, 22000);
 
 	sound *concave_triangle = new sound_concave_triangle(sample_rate, 440.);
 	concave_triangle->add_mapping(0, 0, 1.0);  // mono -> left
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
 	sp.sounds.insert({ { 2, 0 }, sample });
 
-	configure_pipewire(sample_rate, 24, 2, &sp);
+	configure_pipewire(&sp);
 
 	for(;;) {
 		for(int i=0; i<360; i++) {

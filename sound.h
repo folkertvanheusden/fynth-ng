@@ -8,6 +8,7 @@
 #include <shared_mutex>
 #include <vector>
 
+#include "filter.h"
 #include "pipewire.h"
 
 
@@ -202,15 +203,29 @@ public:
 class sound_parameters
 {
 public:
+	sound_parameters(const int sample_rate, const int n_channels, const double lp_freq) :
+       		sample_rate(sample_rate),
+		n_channels(n_channels) {
+		for(int i=0; i<n_channels; i++)
+			lp_filters.push_back(new FilterButterworth(lp_freq, sample_rate, false, sqrt(2.)));
+	}
+
+	virtual ~sound_parameters() {
+		for(auto & filter_instance : lp_filters)
+			delete filter_instance;
+	}
+
 	int sample_rate     { 0 };
 	int n_channels      { 0 };
-	int bits_per_sample { 0 };
 
 	pipewire_data pw;
 
 	std::shared_mutex sounds_lock;
 	// channel, note
 	std::map<std::pair<int, int>, sound *> sounds;
+
+	std::mutex filters_lock;
+	std::vector<FilterButterworth *> lp_filters;
 };
 
 void on_process_audio(void *userdata);

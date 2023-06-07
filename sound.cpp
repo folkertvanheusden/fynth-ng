@@ -31,7 +31,8 @@ void on_process_audio(void *userdata)
 
 	// printf("latency: %.2fms, channel count: %d\n", period_size * 1000.0 / sp->sample_rate, sp->n_channels);
 
-//	try {
+//	try
+	{
 		std::shared_lock lck(sp->sounds_lock);
 
 		for(int t=0; t<period_size; t++) {
@@ -52,16 +53,25 @@ void on_process_audio(void *userdata)
 				sound.second->tick();
 			}
 		}
-//	}
+	}
 //	catch(...) {
 //		printf("Exception\n");
 //	}
 
-again:
 	double *dest = reinterpret_cast<double *>(buf->datas[0].data);
 
 	if (dest) {
-		memcpy(dest, temp_buffer, period_size * sp->n_channels * sizeof(double));
+		std::unique_lock lck(sp->filters_lock);
+
+		for(int t=0; t<period_size; t++) {
+			double *current_sample_base_in = &temp_buffer[t * sp->n_channels];
+			double *current_sample_base_out = &dest[t * sp->n_channels];
+
+			for(int c=0; c<sp->n_channels; c++)
+				current_sample_base_out[c] = sp->lp_filters[c]->apply(current_sample_base_in[c]);
+		}
+
+		lck.unlock();
 
 		buf->datas[0].chunk->offset = 0;
 		buf->datas[0].chunk->stride = stride;
