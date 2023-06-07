@@ -54,6 +54,14 @@ public:
 		input_output_matrix[from][to] = v;
 	}
 
+	void set_volume(const double v)
+	{
+		for(size_t from=0; from<input_output_matrix.size(); from++) {
+			for(auto & to: input_output_matrix.at(from))
+				to.second = v;
+		}
+	}
+
 	double get_volume(const int from, const int to)
 	{
 		return input_output_matrix[from][to];
@@ -218,7 +226,7 @@ public:
 	int sample_rate     { 0 };
 	int n_channels      { 0 };
 
-	pipewire_data pw;
+	pipewire_data_audio pw;
 
 	std::shared_mutex sounds_lock;
 	// channel, note

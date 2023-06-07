@@ -8,7 +8,9 @@ add_executable(
   error.cpp
   filter.cpp
   main.cpp
+  pipewire.cpp
   pipewire-audio.cpp
+  pipewire-midi.cpp
   sample.cpp
   sound.cpp
 )

@@ -3,12 +3,13 @@
 
 #include "sound.h"
 
+
 static void on_state_changed(void *data, enum pw_stream_state old, enum pw_stream_state state, const char *error)
 {
 //	printf("%d --> %d | %s\n", old, state, error);
 }
 
-void configure_pipewire(sound_parameters *const target)
+void configure_pipewire_audio(sound_parameters *const target)
 {
 	const char prog_name[] = "fynth-ng";
 
@@ -61,13 +62,4 @@ void configure_pipewire(sound_parameters *const target)
 
 			printf("pipewire thread terminating\n");
 	});
-}
-
-void init_pipewire(int *argc, char **argv[])
-{
-	pw_log_set_level(SPA_LOG_LEVEL_TRACE);
-
-        pw_init(argc, argv);
-
-	printf("Compiled with libpipewire %s, linked with libpipewire %s\n", pw_get_headers_version(), pw_get_library_version());
 }

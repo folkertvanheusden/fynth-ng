@@ -6,7 +6,7 @@
 #include <spa/param/audio/format-utils.h>
 
 
-class pipewire_data
+class pipewire_data_audio
 {
 public:
 	std::thread       *th            { nullptr };
@@ -22,5 +22,4 @@ public:
 
 class sound_parameters;
 
-void configure_pipewire(sound_parameters *const target);
-void init_pipewire(int *argc, char **argv[]);
+void configure_pipewire_audio(sound_parameters *const target);
