@@ -61,14 +61,7 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 
 			auto it = pw_data->sp->sounds.find({ ch, note });
 
-			if (velocity == 0) {
-				if (it != pw_data->sp->sounds.end()) {
-					it->second->set_has_ended();
-
-					pw_data->sp->note_end_cv.notify_all();
-				}
-			}
-			else {
+			if (velocity) {
 				if (it == pw_data->sp->sounds.end()) {
 					double frequency = midi_note_to_frequency(note);
 
@@ -82,6 +75,14 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 					it->second->set_volume(velocity_float);
 
 					it->second->unset_has_ended();
+				}
+			}
+
+			if (velocity == 0 || cmd == 0x80) {
+				if (it != pw_data->sp->sounds.end()) {
+					it->second->set_has_ended();
+
+					pw_data->sp->note_end_cv.notify_all();
 				}
 			}
 		}
