@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "filter.h"
-#include "pipewire.h"
+#include "pipewire-audio.h"
 
 
 double f_to_delta_t(const double frequency, const int sample_rate);

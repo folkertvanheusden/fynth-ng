@@ -1,7 +1,7 @@
 #include <unistd.h>
 
 #include "effects.h"
-#include "pipewire.h"
+#include "pipewire-audio.h"
 #include "sound.h"
 
 
