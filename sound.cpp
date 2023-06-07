@@ -146,10 +146,11 @@ void end_notes(sound_parameters *const sp)
 
 			if (new_volume <= 0.)
 				to_erase.push_back(sound.first);
-			else
+			else {
 				sound.second->set_volume(new_volume);
 
-			have_any = true;
+				have_any = true;
+			}
 		}
 
 		for(auto & item : to_erase) {
