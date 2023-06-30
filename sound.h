@@ -230,6 +230,56 @@ public:
 	}
 };
 
+class sound_mandelsine : public sound_sine
+{
+private:
+	double xc { 0. };
+	double yc { 0. };
+	double x  { 0. };
+	double y  { 0. };
+
+public:
+	sound_mandelsine(const int sample_rate, const double frequency) : sound_sine(sample_rate, frequency)
+	{
+		// do some trickery to make the frequency into an angle
+		double normalized_frequency = frequency / 12544.;  // highest midi frequency is a tad lower than 12544
+
+		xc = sin(normalized_frequency * M_PI) * 2. - 1.;
+		yc = cos(normalized_frequency * M_PI) * 2. - 1.;
+	}
+
+	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
+	{
+		double xkw = x * x;
+		double ykw = y * y;
+
+		double factor = 1.0;
+
+		if (xkw + ykw >= 4.0) {
+			xkw = x = 0.;
+			ykw = y = 0.;
+		}
+		else {
+			factor = xkw > ykw ? ykw / xkw : xkw / ykw;
+		}
+
+		double temp = xkw - ykw + xc;
+		y = 2. * x * y + yc;
+		x = temp;
+
+//		printf("%f %f | { %f,%f } %f,%f | %f\n", t, factor, xkw, ykw, x, y, cos(factor));
+
+		double v_out = sin(t) * sin(pow(t, factor));
+
+		return { v_out, input_output_matrix[channel_nr] };
+	}
+
+	std::string get_name() const override
+	{
+		return "mandelsine";
+	}
+};
+
 class sound_sample : public sound
 {
 private:
@@ -279,6 +329,10 @@ public:
 	std::vector<FilterButterworth *> lp_filters;
 
 	std::condition_variable_any note_end_cv;
+
+	// not one, to prevent clipping
+	double global_volume { 0.25 };
+	enum { C_FACTOR, C_ATAN  } clipping { C_FACTOR };
 };
 
 void on_process_audio(void *userdata);
