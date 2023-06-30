@@ -13,9 +13,11 @@ int main(int argc, char *argv[])
 
 	init_pipewire(&argc, &argv);
 
-	sound_parameters sp_audio(sample_rate, 2, 22000);
+	sound_parameters sp_audio(sample_rate, 2, 21000);
 
 	configure_pipewire_audio(&sp_audio);
+
+	sp_audio.clipping = sound_parameters::C_FACTOR;
 
 	pipewire_data_midi sp_midi;
 	configure_pipewire_midi(&sp_midi);

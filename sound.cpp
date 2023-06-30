@@ -31,7 +31,6 @@ void on_process_audio(void *userdata)
 
 	// printf("latency: %.2fms, channel count: %d\n", period_size * 1000.0 / sp->sample_rate, sp->n_channels);
 
-//	try
 	{
 		std::shared_lock lck(sp->sounds_lock);
 
@@ -54,9 +53,6 @@ void on_process_audio(void *userdata)
 			}
 		}
 	}
-//	catch(...) {
-//		printf("Exception\n");
-//	}
 
 	double *dest = reinterpret_cast<double *>(buf->datas[0].data);
 
@@ -67,8 +63,14 @@ void on_process_audio(void *userdata)
 			double *current_sample_base_in = &temp_buffer[t * sp->n_channels];
 			double *current_sample_base_out = &dest[t * sp->n_channels];
 
-			for(int c=0; c<sp->n_channels; c++)
-				current_sample_base_out[c] = sp->lp_filters[c]->apply(current_sample_base_in[c]);
+			if (sp->clipping == sound_parameters::C_ATAN) {
+				for(int c=0; c<sp->n_channels; c++)
+					current_sample_base_out[c] = atan(sp->lp_filters[c]->apply(current_sample_base_in[c])) / M_PI;
+			}
+			else if (sp->clipping == sound_parameters::C_FACTOR) {
+				for(int c=0; c<sp->n_channels; c++)
+					current_sample_base_out[c] = sp->lp_filters[c]->apply(current_sample_base_in[c]) * sp->global_volume;
+			}
 		}
 
 		lck.unlock();
@@ -80,8 +82,9 @@ void on_process_audio(void *userdata)
 		if (pw_stream_queue_buffer(sp->pw.stream, b))
 			printf("pw_stream_queue_buffer failed\n");
 	}
-	else
+	else {
 		printf("no buffer\n");
+	}
 
 	delete [] temp_buffer;
 }

@@ -51,6 +51,8 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 			pw_data->last_command = data[0];
 		}
 
+		printf("%02x %02x %02x\n", data[0], data[1], data[2]);
+
 		if (cmd == 0x80 || cmd == 0x90) {
 			int note     = data[1];
 			int velocity = data[2];
@@ -65,7 +67,8 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 				if (it == pw_data->sp->sounds.end()) {
 					double frequency = midi_note_to_frequency(note);
 
-					sound *sample = new sound_sine(pw_data->sp->sample_rate, frequency);
+					//sound *sample = new sound_mandelsine(pw_data->sp->sample_rate, frequency);
+					sound *sample = new sound_pwm(pw_data->sp->sample_rate, frequency, 1, 13, false);
 					sample->add_mapping(0, 0, velocity_float);  // mono -> left
 					sample->add_mapping(0, 1, velocity_float);  // mono -> right
 

@@ -115,7 +115,7 @@ public:
 	// sample, output-channels
 	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) = 0;
 
-	void tick()
+	virtual void tick()
 	{
 		t += delta_t * pitchbend;
 	}
@@ -152,10 +152,29 @@ public:
 
 class sound_square_wave : public sound
 {
+protected:
+	const int n { 1 };
+
+	std::vector<double> delta_t;
+	std::vector<double> t;
+
 public:
-	sound_square_wave(const int sample_rate, const double frequency) : sound(sample_rate, frequency)
+	sound_square_wave(const int sample_rate, const double frequency, const int n, const double adjust, const bool adjust_is_mul) :
+		sound(sample_rate, frequency),
+		n(n)
 	{
-		delta_t = f_to_delta_t(frequency, sample_rate);
+		double work_frequency = frequency;
+
+		for(int i=0; i<n; i++) {
+			delta_t.push_back(f_to_delta_t(work_frequency, sample_rate));
+
+			if (adjust_is_mul)
+				work_frequency *= adjust;
+			else
+				work_frequency += adjust;
+		}
+
+		t.resize(n);
 
 		input_output_matrix.resize(1);
 	}
@@ -168,16 +187,73 @@ public:
 	// sample, output-channels
 	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
 	{
-		double v = sin(t);
+		double max = 1. / n;
+		double v_out = 0.;
 
-		double v_out = v > 0 ? 1 : (v < 0 ? -1 : 0);
+		for(int i=0; i<n; i++) {
+			double v = sin(t.at(i));
+
+			v_out += v > 0 ? max : (v < 0 ? -max : 0);
+		}
+
+		return { v_out, input_output_matrix[channel_nr] };
+	}
+
+	virtual void tick() override
+	{
+		for(int i=0; i<n; i++)
+			t.at(i) += delta_t.at(i) * pitchbend;
+	}
+
+	std::string get_name() const override
+	{
+		return "square_wave";
+	}
+};
+
+class sound_pwm : public sound_square_wave
+{
+private:
+	std::vector<double> error;
+	std::vector<bool> state;
+
+public:
+	sound_pwm(const int sample_rate, const double frequency, const int n, const double adjust, const bool adjust_is_mul) :
+		sound_square_wave(sample_rate, frequency, n, adjust, adjust_is_mul)
+	{
+		error.resize(n);
+		state.resize(n);
+	}
+
+	virtual size_t get_n_channels() override
+	{
+		return 1;
+	}
+
+	// sample, output-channels
+	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
+	{
+		double max = 1. / n;
+		double v_out = 0.;
+
+		for(int i=0; i<n; i++) {
+			error.at(i) += delta_t.at(i) / 2.;
+
+			while(error.at(i) >= 1.0) {
+				error.at(i) -= 1.0;
+
+				state.at(i) = !state.at(i);
+			}
+
+			v_out += state.at(i) ? max : -max;
+		}
 
 		return { v_out, input_output_matrix[channel_nr] };
 	}
 
 	std::string get_name() const override
 	{
-		return "square_wave";
+		return "pwm";
 	}
 };
 
