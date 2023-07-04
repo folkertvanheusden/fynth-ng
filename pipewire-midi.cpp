@@ -14,19 +14,15 @@ static float midi_note_to_frequency(const uint8_t note)
 // this can be faster/more efficient
 void update_continuous_controller_settings(pipewire_data_midi *const pw_data)
 {
-	printf("update_continuous_controller_settings\n");
-
 	for(auto & ch_settings : pw_data->settings_continuous_controller) {
 		for(auto & sound : pw_data->sp->sounds) {
 			if (sound.first.first != ch_settings.first)
 				continue;
 
-			printf("found channel %d ", ch_settings.first);
-
 			for(auto & cs_sub : ch_settings.second) {
 				for(auto & control : sound.second->get_controls()) {
 					if (control.cm_mode == sound_control::cm_continuous_controller && control.cm_index == cs_sub.first) {
-						printf("found setting %x\n", control.cm_index);
+						printf("set %s to %d\n", control.name.c_str(), cs_sub.second);
 						sound.second->set_control(control.index, cs_sub.second);
 						break;
 					}
@@ -92,8 +88,9 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 				if (it == pw_data->sp->sounds.end()) {
 					double frequency = midi_note_to_frequency(note);
 
-					//sound *sample = new sound_mandelsine(pw_data->sp->sample_rate, frequency);
-					sound *sample = new sound_pwm(pw_data->sp->sample_rate, frequency, 7, false);
+					// sound *sample = new sound_mandelsine(pw_data->sp->sample_rate, frequency);
+					// sound *sample = new sound_pwm(pw_data->sp->sample_rate, frequency, 7, false);
+					sound *sample = new sound_square_wave(pw_data->sp->sample_rate, frequency, 7, false);
 					sample->add_mapping(0, 0, velocity_float);  // mono -> left
 					sample->add_mapping(0, 1, velocity_float);  // mono -> right
 
@@ -117,7 +114,7 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 			}
 		}
 		else if (cmd == 0xb0) {
-			printf("CONTROL ");
+			printf("CONTROL 0xb0 %02x %02x\n", data[1], data[2]);
 			std::unique_lock lck(pw_data->sp->sounds_lock);
 
 			auto it = pw_data->settings_continuous_controller.find(ch);

@@ -87,8 +87,9 @@ public:
 
 	virtual void set_control(const int nr, const int value)
 	{
-		printf("set control %d to %d| ", nr, value);
+		printf("set control %d to %d: ", nr, value);
 		controls.at(nr).current_setting = value / controls.at(nr).divide_by + controls.at(nr).add;
+		printf("%f\n", controls.at(nr).current_setting);
 	}
 
 	void add_mapping(const int from, const int to, const double volume)
@@ -192,7 +193,6 @@ protected:
 
 	void update_delta_t()
 	{
-		printf("%f %f\n", frequency, controls.at(0).current_setting);
 		double work_frequency = frequency;
 
 		for(int i=0; i<n; i++) {
@@ -212,7 +212,8 @@ public:
 		adjust_is_mul(adjust_is_mul)
 	{
 		controls = {
-			{ sound_control::cm_continuous_controller, 0x0d, 0, "distance", 1, 0, 0 }
+			{ sound_control::cm_continuous_controller, 0x0d, 0, "distance", 1, 0, 0 },
+			{ sound_control::cm_continuous_controller, 0x0c, 1, "threshold", 127, 0, 0 }
 		};
 
 		delta_t.resize(n);
@@ -239,13 +240,15 @@ public:
 	// sample, output-channels
 	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
 	{
+		double th_plus = controls.at(1).current_setting;
+		double th_min  = -th_plus;
 		double max = 1. / n;
 		double v_out = 0.;
 
 		for(int i=0; i<n; i++) {
 			double v = sin(t.at(i));
 
-			v_out += v > 0 ? max : (v < 0 ? -max : 0);
+			v_out += v > th_plus ? max : (v < th_min ? -max : 0);
 		}
 
 		return { v_out, input_output_matrix[channel_nr] };
