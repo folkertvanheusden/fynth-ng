@@ -1,6 +1,9 @@
 project(fynth-ng)
 cmake_minimum_required(VERSION 3.2)
-add_definitions("-std=gnu++17 -ggdb3")
+add_definitions("-ggdb3")
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable(
   fynth-ng

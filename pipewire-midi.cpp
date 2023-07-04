@@ -6,6 +6,8 @@
 #include "pipewire-midi.h"
 
 
+constexpr int supersaw_width = 7;
+
 static float midi_note_to_frequency(const uint8_t note)
 {
         return pow(2.0, (double(note) - 69.0) / 12.0) * 440.0;
@@ -74,7 +76,7 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 
 		printf("[ %02x %02x %02x ]\n", data[0], data[1], data[2]);
 
-		if (cmd == 0x80 || cmd == 0x90) {
+		if (cmd == 0x80 || cmd == 0x90) {  // note on/off
 			int note     = data[1];
 			int velocity = data[2];
 
@@ -88,11 +90,31 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 				if (it == pw_data->sp->sounds.end()) {
 					double frequency = midi_note_to_frequency(note);
 
-					// sound *sample = new sound_mandelsine(pw_data->sp->sample_rate, frequency);
-					// sound *sample = new sound_pwm(pw_data->sp->sample_rate, frequency, 7, false);
-					sound *sample = new sound_square_wave(pw_data->sp->sample_rate, frequency, 7, false);
+					sound *sample { nullptr };
+
+					int instrument = pw_data->instrument_selection[ch] % 6;  // sample is currently broken
+
+					if (instrument == 0)
+						sample = new sound_sine(pw_data->sp->sample_rate, frequency);
+					else if (instrument == 1)
+						sample = new sound_square_wave(pw_data->sp->sample_rate, frequency, supersaw_width, false);
+					else if (instrument == 2)
+						sample = new sound_pwm(pw_data->sp->sample_rate, frequency, supersaw_width, false);
+					else if (instrument == 3)
+						sample = new sound_triangle(pw_data->sp->sample_rate, frequency);
+					else if (instrument == 4)
+						sample = new sound_concave_triangle(pw_data->sp->sample_rate, frequency);
+					else if (instrument == 5)
+						sample = new sound_mandelsine(pw_data->sp->sample_rate, frequency);
+					else if (instrument == 6)
+						sample = new sound_sample(pw_data->sp->sample_rate, "the_niz.wav");
+					else
+						printf("internal error\n");
+
 					sample->add_mapping(0, 0, velocity_float);  // mono -> left
 					sample->add_mapping(0, 1, velocity_float);  // mono -> right
+
+					printf("%s at %fHz\n", sample->get_name().c_str(), frequency);
 
 					pw_data->sp->sounds.insert({ { ch, note }, sample });
 
@@ -134,6 +156,11 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 
 			update_continuous_controller_settings(pw_data);
 		}
+		else if (cmd == 0xc0) {  // select instrument
+			pw_data->instrument_selection[ch] = data[1];
+
+			printf("instrument nr %d\n", pw_data->instrument_selection[ch]);
+		}
 	}
 
 	pw_filter_queue_buffer(pw_data->in_port, b);
@@ -147,6 +174,8 @@ static const struct pw_filter_events filter_events = {
 void configure_pipewire_midi(pipewire_data_midi *const target)
 {
 	const char prog_name[] = "fynth-ng";
+
+	target->instrument_selection.resize(16);
 
 	target->th = new std::thread([prog_name, target]() {
 			target->loop = pw_main_loop_new(nullptr);

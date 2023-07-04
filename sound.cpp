@@ -112,6 +112,9 @@ std::pair<double, std::map<int, double> > sound_sample::get_sample(const size_t 
 
 	size_t offset = fmod(use_t, samples.size());
 
+	if (offset >= samples.size())
+		printf("sound_sample: internal error\n");
+
 	return { samples.at(offset).at(channel_nr), input_output_matrix[channel_nr] };
 }
 

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <stdint.h>
 #include <thread>
+#include <vector>
 
 #include <pipewire/filter.h>
 #include <pipewire/pipewire.h>
@@ -32,6 +34,8 @@ public:
 
 	// ch, sub, value
 	std::map<int, std::map<uint8_t, int> > settings_continuous_controller;
+
+	std::vector<int> instrument_selection;
 };
 
 void configure_pipewire_midi(pipewire_data_midi *const target);

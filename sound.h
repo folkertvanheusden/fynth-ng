@@ -162,6 +162,10 @@ public:
 		delta_t = f_to_delta_t(frequency, sample_rate);
 
 		input_output_matrix.resize(1);
+
+		controls = {
+			{ sound_control::cm_continuous_controller, 0x0c, 0, "threshold", 127, 0, 0 }
+		};
 	}
 
 	virtual size_t get_n_channels() override
@@ -172,7 +176,17 @@ public:
 	// sample, output-channels
 	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
 	{
-		return { sin(t), input_output_matrix[channel_nr] };
+		double th = controls.at(0).current_setting;
+		double v = sin(t);
+
+		if (v > -th && v < th) {
+			if (v < 0)
+				v = -th;
+			else
+				v = th;
+		}
+
+		return { v, input_output_matrix[channel_nr] };
 	}
 
 	std::string get_name() const override
