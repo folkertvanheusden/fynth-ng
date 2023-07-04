@@ -17,12 +17,27 @@
 
 double f_to_delta_t(const double frequency, const int sample_rate);
 
+class sound_control
+{
+public:
+	// name
+	enum { cm_continuous_controller } cm_mode;
+	uint8_t cm_index;  // midi index (for 0xb0: data-1)
+	int index;  // internal index
+	std::string name;
+	// how to transform a value
+	double divide_by;
+	double add;
+	// last transformed value
+	double current_setting;
+};
+
 class sound
 {
-private:
+protected:
+	int    sample_rate { 44100 };
 	double frequency { 100. };
 
-protected:
 	double pitchbend { 1.   };
 
 	double t         { 0.   };
@@ -34,8 +49,12 @@ protected:
 	// input channel, { output channel, volume }
 	std::vector<std::map<int, double> > input_output_matrix;
 
+	std::vector<sound_control> controls;
+
 public:
-	sound(const int sample_rate, const double frequency) : frequency(frequency)
+	sound(const int sample_rate, const double frequency) :
+		sample_rate(sample_rate),
+		frequency(frequency)
 	{
 	}
 
@@ -59,6 +78,17 @@ public:
 	void unset_has_ended()
 	{
 		has_ended_ts.reset();
+	}
+
+	virtual std::vector<sound_control> get_controls()
+	{
+		return controls;
+	}
+
+	virtual void set_control(const int nr, const int value)
+	{
+		printf("set control %d to %d| ", nr, value);
+		controls.at(nr).current_setting = value / controls.at(nr).divide_by + controls.at(nr).add;
 	}
 
 	void add_mapping(const int from, const int to, const double volume)
@@ -155,33 +185,55 @@ class sound_square_wave : public sound
 protected:
 	const int n { 1 };
 
+	const bool adjust_is_mul { false };
+
 	std::vector<double> delta_t;
 	std::vector<double> t;
 
-public:
-	sound_square_wave(const int sample_rate, const double frequency, const int n, const double adjust, const bool adjust_is_mul) :
-		sound(sample_rate, frequency),
-		n(n)
+	void update_delta_t()
 	{
+		printf("%f %f\n", frequency, controls.at(0).current_setting);
 		double work_frequency = frequency;
 
 		for(int i=0; i<n; i++) {
-			delta_t.push_back(f_to_delta_t(work_frequency, sample_rate));
+			delta_t.at(i) = f_to_delta_t(work_frequency, sample_rate);
 
 			if (adjust_is_mul)
-				work_frequency *= adjust;
+				work_frequency *= controls.at(0).current_setting * 3;
 			else
-				work_frequency += adjust;
+				work_frequency += controls.at(0).current_setting * 3;
 		}
+	}
+
+public:
+	sound_square_wave(const int sample_rate, const double frequency, const int n, const bool adjust_is_mul) :
+		sound(sample_rate, frequency),
+		n(n),
+		adjust_is_mul(adjust_is_mul)
+	{
+		controls = {
+			{ sound_control::cm_continuous_controller, 0x0d, 0, "distance", 1, 0, 0 }
+		};
+
+		delta_t.resize(n);
 
 		t.resize(n);
 
 		input_output_matrix.resize(1);
+
+		update_delta_t();
 	}
 
 	virtual size_t get_n_channels() override
 	{
 		return 1;
+	}
+
+	virtual void set_control(const int nr, const int value) override
+	{
+		sound::set_control(nr, value);
+
+		update_delta_t();
 	}
 
 	// sample, output-channels
@@ -218,8 +270,8 @@ private:
 	std::vector<bool> state;
 
 public:
-	sound_pwm(const int sample_rate, const double frequency, const int n, const double adjust, const bool adjust_is_mul) :
-		sound_square_wave(sample_rate, frequency, n, adjust, adjust_is_mul)
+	sound_pwm(const int sample_rate, const double frequency, const int n, const bool adjust_is_mul) :
+		sound_square_wave(sample_rate, frequency, n, false)
 	{
 		error.resize(n);
 		state.resize(n);
@@ -322,6 +374,10 @@ public:
 
 		xc = sin(normalized_frequency * M_PI) * 2. - 1.;
 		yc = cos(normalized_frequency * M_PI) * 2. - 1.;
+
+		controls = {
+			{ sound_control::cm_continuous_controller, 0x0d, 0, "factor scaling", 64, -1, 1 }
+		};
 	}
 
 	virtual std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override
@@ -338,6 +394,8 @@ public:
 		else {
 			factor = xkw > ykw ? ykw / xkw : xkw / ykw;
 		}
+
+		factor *= controls.at(0).current_setting;
 
 		double temp = xkw - ykw + xc;
 		y = 2. * x * y + yc;
