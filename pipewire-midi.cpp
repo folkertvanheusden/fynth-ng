@@ -118,6 +118,8 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 
 					pw_data->sp->sounds.insert({ { ch, note }, sample });
 
+					sample->set_pitch_bend(pw_data->pitch_bend[ch]);
+
 					update_continuous_controller_settings(pw_data);
 				}
 				else {
@@ -161,6 +163,16 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 
 			printf("instrument nr %d\n", pw_data->instrument_selection[ch]);
 		}
+		else if (cmd == 0xe0) {  // pitch bend
+			pw_data->pitch_bend[ch] = ((data[2] << 7) | (data[1])) / 8192.0;
+
+			std::unique_lock lck(pw_data->sp->sounds_lock);
+
+			for(auto & sound : pw_data->sp->sounds) {
+				if (sound.first.first == ch)
+					sound.second->set_pitch_bend(pw_data->pitch_bend[ch]);
+			}
+		}
 	}
 
 	pw_filter_queue_buffer(pw_data->in_port, b);
@@ -176,6 +188,9 @@ void configure_pipewire_midi(pipewire_data_midi *const target)
 	const char prog_name[] = "fynth-ng";
 
 	target->instrument_selection.resize(16);
+
+	for(int i=0; i<16; i++)
+		target->pitch_bend.push_back(1.);
 
 	target->th = new std::thread([prog_name, target]() {
 			target->loop = pw_main_loop_new(nullptr);
