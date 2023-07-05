@@ -68,8 +68,14 @@ void on_process_audio(void *userdata)
 					current_sample_base_out[c] = atan(sp->lp_filters[c]->apply(current_sample_base_in[c])) / M_PI;
 			}
 			else if (sp->clipping == sound_parameters::C_FACTOR) {
-				for(int c=0; c<sp->n_channels; c++)
+				for(int c=0; c<sp->n_channels; c++) {
 					current_sample_base_out[c] = sp->lp_filters[c]->apply(current_sample_base_in[c]) * sp->global_volume;
+
+					if (current_sample_base_out[c] < -1.)
+						current_sample_base_out[c] = -1.;
+					else if (current_sample_base_out[c] > 1.)
+						current_sample_base_out[c] = 1.;
+				}
 			}
 		}
 
@@ -94,11 +100,14 @@ sound_sample::sound_sample(const int sample_rate, const std::string & filename) 
 {
 	unsigned sample_sample_rate = 0;
 
-	load_sample(filename, &samples, &sample_sample_rate);
+	auto rc = load_sample(filename);
+
+	samples = rc.first;
+	sample_sample_rate = rc.second;
 
 	delta_t = sample_sample_rate / double(sample_rate);
 
-	input_output_matrix.resize(samples.at(0).size());
+	input_output_matrix.resize(samples->at(0).size());
 
 	printf("Sample %s has %zu channel(s) and is sampled at %uHz\n", filename.c_str(), input_output_matrix.size(), sample_sample_rate);
 }
@@ -108,14 +117,11 @@ std::pair<double, std::map<int, double> > sound_sample::get_sample(const size_t 
 	double use_t = t;
 
 	if (use_t < 0)
-		use_t += ceil(fabs(use_t) / samples.size()) * samples.size();
+		use_t += ceil(fabs(use_t) / samples->size()) * samples->size();
 
-	size_t offset = fmod(use_t, samples.size());
+	size_t offset = fmod(use_t, samples->size());
 
-	if (offset >= samples.size())
-		printf("sound_sample: internal error\n");
-
-	return { samples.at(offset).at(channel_nr), input_output_matrix[channel_nr] };
+	return { samples->at(offset).at(channel_nr), input_output_matrix[channel_nr] };
 }
 
 void end_notes(sound_parameters *const sp)
@@ -158,6 +164,9 @@ void end_notes(sound_parameters *const sp)
 				have_any = true;
 			}
 		}
+
+		if (!to_erase.empty())
+			printf("delete\n");
 
 		for(auto & item : to_erase) {
 			auto it = sp->sounds.find(item);

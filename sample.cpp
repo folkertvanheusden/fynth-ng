@@ -1,3 +1,4 @@
+#include <map>
 #include <sndfile.h>
 #include <string>
 #include <vector>
@@ -5,17 +6,21 @@
 #include "error.h"
 
 
-void load_sample(const std::string & filename, std::vector<std::vector<double> > *const samples, unsigned int *const sample_rate)
+static std::map<std::string, std::pair<std::vector<std::vector<double> > *, unsigned int> > sample_cache;
+
+std::pair<std::vector<std::vector<double> > *, unsigned int> load_sample(const std::string & filename)
 {
+	auto it = sample_cache.find(filename);
+	if (it != sample_cache.end())
+		return it->second;
+
         SF_INFO si = { 0 };
         SNDFILE *sh = sf_open(filename.c_str(), SFM_READ, &si);
 
 	if (!sh)
 		error_exit(true, "Cannot access file %s", filename.c_str());
 
-	*sample_rate = si.samplerate;
-
-	samples->clear();
+	auto *samples = new std::vector<std::vector<double> >();
 
 	constexpr int load_buffer_size = 4096;
 	double *buffer = new double[load_buffer_size * si.channels];
@@ -40,4 +45,16 @@ void load_sample(const std::string & filename, std::vector<std::vector<double> >
 	sf_close(sh);
 
 	delete [] buffer;
+
+	sample_cache.insert({ filename, { samples, si.samplerate } });
+
+	return { samples, si.samplerate };
+}
+
+void unload_sample_cache()
+{
+	for(auto & entry : sample_cache)
+		delete [] entry.second.first;
+
+	sample_cache.clear();
 }

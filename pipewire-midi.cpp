@@ -92,7 +92,7 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 
 					sound *sample { nullptr };
 
-					int instrument = pw_data->instrument_selection[ch] % 6;  // sample is currently broken
+					int instrument = pw_data->instrument_selection[ch] % 6;  // sample & mandelsine are currently broken
 
 					if (instrument == 0)
 						sample = new sound_sine(pw_data->sp->sample_rate, frequency);
@@ -105,9 +105,9 @@ static void on_process_midi(void *data, struct spa_io_position *position)
 					else if (instrument == 4)
 						sample = new sound_concave_triangle(pw_data->sp->sample_rate, frequency);
 					else if (instrument == 5)
-						sample = new sound_mandelsine(pw_data->sp->sample_rate, frequency);
-					else if (instrument == 6)
 						sample = new sound_sample(pw_data->sp->sample_rate, "the_niz.wav");
+					else if (instrument == 6)
+						sample = new sound_mandelsine(pw_data->sp->sample_rate, frequency);
 					else
 						printf("internal error\n");
 

@@ -434,14 +434,14 @@ public:
 class sound_sample : public sound
 {
 private:
-	std::vector<std::vector<double> > samples;
+	std::vector<std::vector<double> > *samples { nullptr };
 
 public:
 	sound_sample(const int sample_rate, const std::string & file_name);
 
 	size_t get_n_channels() override
 	{
-		return samples.at(0).size();
+		return samples->at(0).size();
 	}
 
 	std::pair<double, std::map<int, double> > get_sample(const size_t channel_nr) override;

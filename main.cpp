@@ -4,6 +4,7 @@
 #include "pipewire.h"
 #include "pipewire-audio.h"
 #include "pipewire-midi.h"
+#include "sample.h"
 #include "sound.h"
 
 
@@ -28,6 +29,8 @@ int main(int argc, char *argv[])
 
 	for(;;)
 		usleep(10000);
+
+	unload_sample_cache();
 
 	return 0;
 }

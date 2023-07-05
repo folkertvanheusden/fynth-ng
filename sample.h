@@ -2,4 +2,5 @@
 #include <vector>
 
 
-void load_sample(const std::string & filename, std::vector<std::vector<double> > *const samples, unsigned int *const sample_rate);
+std::pair<std::vector<std::vector<double> > *, unsigned int> load_sample(const std::string & filename);
+void unload_sample_cache();
