@@ -9,6 +9,7 @@
 #include <optional>
 #include <set>
 #include <shared_mutex>
+#include <string>
 #include <vector>
 
 #include "filter.h"
